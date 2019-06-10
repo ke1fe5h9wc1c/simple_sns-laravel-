@@ -13,8 +13,10 @@ class CreateFollowsTweetssTable extends Migration
      */
     public function up()
     {
-        Schema::create('follows__tweetss', function (Blueprint $table) {
-            $table->bigIncrements('id');
+        Schema::create('follows__tweets', function (Blueprint $table) {
+            $table->increments('id');
+            $table->integer('follow_id');
+            $table->integer('user_id');
             $table->timestamps();
         });
     }
