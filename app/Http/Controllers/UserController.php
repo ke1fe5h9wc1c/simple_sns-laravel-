@@ -19,17 +19,22 @@ class UserController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
+
+   public function __construct()
+   {
+     // ログイン強制
+     $this->middleware('auth');
+   }
+
     public function index()
     {
-        $user = Auth::user();
-        // // 現在のUserを取得
-        // $now = DB::table('Users')->where('id', '5')->value('id');
-        // // 現在のUserがF中のUserを取得
-        // $fol = DB::table('Follows')->where('user_id', '=', $now)->pluck('follow_id');
-        // // F中のUserの投稿のみ表示
-        // $fol = DB::table('Tweets')->whereIn('user_id', $fol)->get();
-        //
-        return view('user.index',['user' => $user]);
+      // 現在のUserを取得
+      $user = Auth::user();
+      // 現在のUserがFoloowしているUserを取得
+      $follow = Follow::where('user_id', $user->id)->pluck('follow_id');
+      $tweets = Tweet::whereIn('user_id',$follow)->orWhere('user_id',$user->id)->get()->reverse();
+      // 現在のUser + Follow中のUserの投稿のみ表示
+      return view('users.index',['user' => $user,'tweets' => $tweets]);
     }
 
     /**
@@ -66,7 +71,19 @@ class UserController extends Controller
      */
     public function show($id)
     {
-        //
+      // Show_pageで表示するUser
+      $show_user = User::find($id);
+      // Show_pageで表示するUserのTweet
+      $tweet = Tweet::where('user_id', $id)->get()->reverse();
+      // Show_pageで表示するUserがFollowしているUser
+      $follow = Follow::where('user_id', $id)->pluck('follow_id')->all();
+      $folloew = User::whereIn('id',$follow)->get();
+      // Show_pageで表示するUserを現在のUserがFollowしているか
+      $collection = Follow::where('user_id', Auth::id())->get();
+      $follow_check = $collection->where('follow_id', $id)->first();
+
+      return view('users.show', ['show_user' => $show_user,'tweet' => $tweet,'folloew' => $folloew,'follow_check' => $follow_check,
+    'collection' => $collection]);
     }
 
     /**
@@ -92,14 +109,33 @@ class UserController extends Controller
         //
     }
 
+    public function follow(Request $request)
+    {
+      $article = new Follow;
+      $article->user_id = $request->user_id;
+      $article->follow_id = $request->follow_id;
+      $article->save();
+      return back()->with('message', 'Followしました');
+    }
+
     /**
      * Remove the specified resource from storage.
      *
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
+     
     public function destroy($id)
     {
-        //
+      // follow解除処理
+      $un_follow = Follow::find($id);
+      $tweet->delete();
+      return back()->with('message', 'Followを解除しました');
+    }
+
+    public function logout()
+    {
+      Auth::logout();
+      return redirect('/');
     }
 }

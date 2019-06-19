@@ -24,7 +24,7 @@ class StoreTweetPost extends FormRequest
     public function rules()
     {
         return [
-          'comment' => 'required|max:3'
+          'comment' => 'required|max:100'
         ];
     }
 
